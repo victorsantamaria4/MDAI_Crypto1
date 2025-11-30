@@ -1,0 +1,11 @@
+com\example\user_demo\data\repository\CarteraRepository.class
+com\example\user_demo\data\repository\UsuarioRepository.class
+com\example\user_demo\data\model\Criptomoneda.class
+com\example\user_demo\data\repository\HistorialRepository.class
+com\example\user_demo\data\repository\CriptomonedaRepository.class
+com\example\user_demo\UserDemoApplication.class
+com\example\user_demo\data\model\Cartera.class
+com\example\user_demo\data\model\Transaccion.class
+com\example\user_demo\data\model\Usuario.class
+com\example\user_demo\data\model\Historial.class
+com\example\user_demo\data\repository\TransaccionRepository.class
