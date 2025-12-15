@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Usuario</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #121212; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background-color: #1e1e1e; border: 1px solid #333; }
+
+        /* Estilos corregidos para inputs oscuros */
+        .form-control {
+            background-color: #2b2b2b;
+            border: 1px solid #444;
+            color: #fff;
+        }
+        .form-control:focus {
+            background-color: #333;
+            color: #fff;
+            border-color: #198754;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+        }
+        /* Color para el placeholder */
+        .form-control::placeholder { color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container" style="max-width: 500px;">
+    <div class="card shadow-lg border-success">
+        <div class="card-header bg-success text-white text-center py-3">
+            <h4 class="mb-0"><i class="fa-solid fa-user-plus me-2"></i> Registrar Nuevo Usuario</h4>
+        </div>
+        <div class="card-body p-4">
+
+            <form th:action="@{/usuarios/guardar}" method="post">
+
+                <!-- Nombre -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Nombre Completo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" required minlength="3">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Correo Electrónico</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" name="email" class="form-control" placeholder="juan@ejemplo.com" required>
+                    </div>
+                </div>
+
+                <!-- NUEVO: Saldo Inicial -->
+                <div class="mb-4">
+                    <label class="form-label text-white">Saldo Inicial de Cartera ($)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-success fw-bold">$</span>
+                        <input type="number" name="saldoInicial" class="form-control" placeholder="0.00" min="0" step="0.01" value="0.00">
+                    </div>
+                    <div class="form-text text-secondary">Se creará una cartera automática con este saldo.</div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg fw-bold">Guardar Usuario</button>
+                    <a th:href="@{/}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

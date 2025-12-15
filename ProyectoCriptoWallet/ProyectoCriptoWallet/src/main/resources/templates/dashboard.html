@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Cripto</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body { background-color: #121212; color: #f0f0f0; padding-bottom: 50px; }
+        .navbar { background-color: #1f1f1f; border-bottom: 1px solid #333; }
+
+        /* Tarjetas */
+        .card { background-color: #1e1e1e; border: 1px solid #333; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card-header { border-bottom: 1px solid #444; font-weight: bold; background-color: #252525; color: #fff; }
+
+        /* Texto etiquetas */
+        .text-crypto-label { color: #aaa; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Consola Historial */
+        .console-window {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: scroll;
+            font-family: 'Courier New', monospace;
+        }
+        .console-text { color: #00ff41; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<!-- BARRA DE NAVEGACIÓN -->
+<nav class="navbar navbar-dark mb-4 px-4">
+    <a class="navbar-brand text-light" th:href="@{/}"><i class="fa-solid fa-arrow-left me-2"></i> Cerrar Sesión</a>
+    <div class="d-flex align-items-center">
+        <div class="text-end me-3">
+            <small class="text-muted d-block">Usuario conectado</small>
+            <span class="fw-bold text-warning" th:text="${usuario.nombre}">Nombre</span>
+        </div>
+        <i class="fa-solid fa-circle-user fa-2x text-secondary"></i>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- ALERTAS -->
+    <div th:if="${mensaje}" th:class="'alert alert-' + ${tipo} + ' alert-dismissible fade show shadow'">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- RESUMEN GLOBAL -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card bg-primary bg-gradient text-white border-0 shadow-lg" style="min-height: 140px;">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <h6 class="text-uppercase opacity-75 mb-1">Patrimonio Total Estimado</h6>
+                        <h1 class="display-4 fw-bold mb-0">$ <span th:text="${#numbers.formatDecimal(balanceTotal, 1, 2)}">0.00</span></h1>
+                    </div>
+                    <i class="fa-solid fa-wallet fa-4x opacity-25"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 bg-transparent border-primary border-2 border-dashed d-flex align-items-center justify-content-center">
+                <a th:href="@{/transferencia/{id}(id=${usuario.idUsuario})}" class="btn btn-primary btn-lg w-75 shadow-sm">
+                    <i class="fa-solid fa-paper-plane me-2"></i> Transferir
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COLUMNA IZQUIERDA: CARTERAS -->
+        <div class="col-lg-7">
+            <h4 class="text-white mb-3"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Mis Carteras</h4>
+
+            <div th:each="cartera : ${usuario.carteras}" class="card mb-4">
+
+                <!-- CABECERA: PATRIMONIO + EFECTIVO -->
+                <div class="card-header bg-dark text-white pt-3 pb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-wallet text-secondary me-2"></i>
+                            <span class="me-2">Cartera #<span th:text="${cartera.idCartera}"></span></span>
+
+                            <!-- BOTÓN ELIMINAR CARTERA (NUEVO) -->
+                            <form th:action="@{/carteras/eliminar}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta cartera? Se perderán los fondos y activos.');">
+                                <input type="hidden" name="carteraId" th:value="${cartera.idCartera}">
+                                <input type="hidden" name="usuarioId" th:value="${usuario.idUsuario}">
+                                <button type="submit" class="btn btn-link text-danger p-0 border-0" title="Eliminar Cartera">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Valor total (Cripto + Fiat) -->
+                        <span class="fs-5 fw-bold text-success">
+                            $ <span th:text="${#numbers.formatDecimal(cartera.patrimonioEstimado, 1, 2)}">0.00</span>
+                        </span>
+                    </div>
+                    <!-- Valor Fiat (Efectivo para invertir) -->
+                    <div class="text-end" style="font-size: 0.75rem; color: #aaa;">
+                        <span class="me-1">Saldo para invertir:</span>
+                        $ <span th:text="${#numbers.formatDecimal(cartera.balanceTotal, 1, 2)}">0.00</span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="text-crypto-label mb-2">Activos en posesión:</div>
+
+                    <!-- LISTA DE ACTIVOS -->
+                    <div th:if="${not #lists.isEmpty(cartera.activos)}" class="d-flex flex-wrap gap-2">
+                        <div th:each="activo : ${cartera.activos}" class="btn-group shadow-sm" role="group">
+
+                            <span class="btn btn-dark btn-sm border-secondary fw-bold text-warning">
+                                <i class="fa-brands fa-bitcoin"></i>
+                                <span th:text="${activo.criptomoneda.simbolo}">BTC</span>
+                            </span>
+
+                            <span class="btn btn-dark btn-sm border-secondary text-white fw-bold">
+                                <span th:text="${#numbers.formatDecimal(activo.cantidad, 1, 4)}">0.0000</span>
+                            </span>
+
+                            <span class="btn btn-dark btn-sm border-secondary text-muted">
+                                <span th:text="${activo.criptomoneda.nombre}">Bitcoin</span>
+                            </span>
+
+                            <!-- Botón Vender/Eliminar Activo -->
+                            <form th:action="@{/carteras/remove-cripto}" method="post" class="btn btn-dark btn-sm border-secondary px-1">
+                                <input type="hidden" name="usuarioId" th:value="${usuario.idUsuario}">
+                                <input type="hidden" name="carteraId" th:value="${cartera.idCartera}">
+                                <input type="hidden" name="criptoId" th:value="${activo.criptomoneda.idCripto}">
+                                <button type="submit" class="bg-transparent border-0 text-danger p-0 px-2" title="Eliminar Activo">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(cartera.activos)}" class="alert alert-dark py-2 text-muted small">
+                        Sin activos digitales.
+                    </div>
+
+                    <hr class="border-secondary my-3">
+
+                    <!-- FORMULARIO DE INVERSIÓN (COMPRAR CRIPTO) -->
+                    <form th:action="@{/carteras/invertir}" method="post" class="row g-2 align-items-end">
+                        <input type="hidden" name="usuarioId" th:value="${usuario.idUsuario}">
+                        <input type="hidden" name="carteraId" th:value="${cartera.idCartera}">
+
+                        <!-- 1. Elegir Cripto -->
+                        <div class="col-5">
+                            <label class="form-label text-crypto-label small mb-1">Activo</label>
+                            <select name="criptoId" class="form-select form-select-sm bg-dark text-light border-secondary">
+                                <option th:each="c : ${todasLasCriptos}"
+                                        th:value="${c.idCripto}"
+                                        th:text="${c.simbolo} + ' ($' + ${c.precioActual} + ')'">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- 2. Cantidad a Invertir -->
+                        <div class="col-4">
+                            <label class="form-label text-crypto-label small mb-1">Invertir ($)</label>
+                            <input type="number" step="any" name="cantidadInversion"
+                                   class="form-control form-control-sm bg-dark text-white border-secondary"
+                                   placeholder="0.00" required>
+                        </div>
+
+                        <!-- 3. Botón Comprar -->
+                        <div class="col-3">
+                            <button type="submit" class="btn btn-sm btn-success w-100 fw-bold">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- BOTÓN CREAR NUEVA CARTERA -->
+            <div class="card bg-transparent border-secondary border-dashed">
+                <div class="card-body text-center">
+                    <form th:action="@{/carteras/crear}" method="post" class="d-flex justify-content-center align-items-center gap-3">
+                        <input type="hidden" name="usuarioId" th:value="${usuario.idUsuario}">
+
+                        <span class="text-white fw-bold">
+                            <i class="fa-solid fa-plus-circle text-success me-1"></i> Abrir nueva cartera con saldo:
+                        </span>
+
+                        <!-- CORRECCIÓN: Se ha añadido el input 'balanceInicial' que faltaba -->
+                        <input type="number" name="balanceInicial" class="form-control form-control-sm bg-dark text-white border-secondary"
+                               style="width: 120px;" placeholder="0.00" min="0" step="0.01" required>
+
+                        <button type="submit" class="btn btn-sm btn-success px-4 fw-bold">Crear</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: HISTORIAL -->
+        <div class="col-lg-5">
+            <h4 class="text-white mb-3"><i class="fa-solid fa-terminal me-2 text-success"></i>Registro de Actividad</h4>
+            <div class="console-window shadow">
+                <div th:if="${usuario.historial != null}">
+                    <div th:if="${not #strings.isEmpty(usuario.historial.detalle)}" class="console-text" th:text="${usuario.historial.detalle}"></div>
+                    <div th:if="${#strings.isEmpty(usuario.historial.detalle)}" class="text-muted fst-italic">> Sistema iniciado...</div>
+                </div>
+                <div th:if="${usuario.historial == null}" class="text-danger">Error: Sin historial.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÓN VOLVER -->
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <a th:href="@{/}" class="btn btn-outline-secondary px-5 py-2">
+                <i class="fa-solid fa-users me-2"></i> Volver a la Lista de Usuarios
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
